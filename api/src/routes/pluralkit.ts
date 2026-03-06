@@ -7,7 +7,7 @@ import { invalidate, keys } from '../db/redis';
 
 const router = Router();
 const PK = 'https://api.pluralkit.me/v2';
-const UA = 'PluralCloud/2.0 (plural.example.com)';
+const UA = 'PluralCloud/2.0';
 
 // Link PluralKit token
 router.post('/link', requireAuth, async (req: AuthRequest, res: Response) => {

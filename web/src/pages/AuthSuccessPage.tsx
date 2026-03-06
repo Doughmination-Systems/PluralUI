@@ -11,7 +11,9 @@ export default function AuthSuccessPage() {
     const token = params.get('token');
     if (token) {
       localStorage.setItem('plural_token', token);
-      refresh().then(() => navigate('/dashboard', { replace: true }));
+      refresh()
+        .then(() => navigate('/dashboard', { replace: true }))
+        .catch(() => navigate('/', { replace: true }));
     } else {
       navigate('/', { replace: true });
     }

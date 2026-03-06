@@ -8,6 +8,14 @@ export interface MinecraftAccount {
   linked_at: string;
 }
 
+export interface HytaleAccount {
+  id: string;
+  hytale_uuid: string;
+  hytale_name: string;
+  linked_at: string;
+  enabled?: boolean;
+}
+
 export interface User {
   id: string;
   discord_id: string;
@@ -16,7 +24,15 @@ export interface User {
   pk_linked: boolean;
   pk_imported: boolean;
   pk_system_id: string | null;
+  sp_linked: boolean;
+  sp_imported: boolean;
+  sp_system_id: string | null;
+  plural_linked: boolean;
+  plural_app: string | null;
+  plural_imported: boolean;
+  plural_user_id: string | null;
   minecraft_accounts: MinecraftAccount[];
+  hytale_accounts: HytaleAccount[];
 }
 
 interface Ctx {
@@ -33,14 +49,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
-    if (!localStorage.getItem('plural_token')) { setUser(null); setLoading(false); return; }
+    if (!localStorage.getItem('plural_token')) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const r = await api.get('/api/me');
+      // Set user before loading=false so Guard never sees loading=false + user=null simultaneously
       setUser(r.data);
-    } catch {
-      localStorage.removeItem('plural_token');
+      setLoading(false);
+    } catch (e: any) {
+      if (e?.response?.status === 401) {
+        localStorage.removeItem('plural_token');
+      }
       setUser(null);
-    } finally { setLoading(false); }
+      setLoading(false);
+    }
   };
 
   const logout = () => { localStorage.removeItem('plural_token'); setUser(null); };

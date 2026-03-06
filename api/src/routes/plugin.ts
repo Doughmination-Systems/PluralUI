@@ -38,7 +38,7 @@ router.get('/player/:uuid', async (req: Request, res: Response) => {
      FROM minecraft_accounts ma
      JOIN users u ON u.id = ma.user_id
      LEFT JOIN members m ON m.user_id = u.id
-     WHERE ma.minecraft_uuid = $1
+     WHERE ma.minecraft_uuid = $1 AND ma.enabled = true
      GROUP BY u.id, ma.minecraft_uuid, ma.minecraft_name`,
     [uuid]
   );

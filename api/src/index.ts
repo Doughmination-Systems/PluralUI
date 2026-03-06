@@ -10,10 +10,17 @@ import authRouter from './routes/auth';
 import userRouter from './routes/user';
 import pkRouter from './routes/pluralkit';
 import pluginRouter from './routes/plugin';
+import spRouter from './routes/simplyplural';
+import pluralRouter from './routes/plural';
 
 const app = express();
 app.use(helmet({
-  hsts: false
+  contentSecurityPolicy: {
+    directives: {
+      ...require('helmet').contentSecurityPolicy.getDefaultDirectives(),
+      'img-src': ["'self'", 'data:', 'https://crafatar.com', 'https://mc-heads.net', 'https://cdn.discordapp.com'],
+    },
+  },
 }));
 app.use(cors({ origin: process.env.PUBLIC_URL, credentials: true }));
 app.use(express.json());
@@ -32,6 +39,8 @@ app.use(rateLimit({
 app.use('/auth', authRouter);
 app.use('/api', userRouter);
 app.use('/api/pluralkit', pkRouter);
+app.use('/api/simplyplural', spRouter);
+app.use('/api/plural', pluralRouter);
 app.use('/plugin', pluginRouter);
 app.get('/health', async (_req, res) => {
   const redisPing = await redis.ping().catch(() => 'error');

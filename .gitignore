@@ -1,2 +1,6 @@
 .env
 data/
+api/package-lock.json
+api/node_modules/
+web/package-lock.json
+web/node_modules/

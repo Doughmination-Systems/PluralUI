@@ -47,6 +47,7 @@ services:
       MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
       MICROSOFT_REDIRECT_URI: ${PUBLIC_URL}/auth/minecraft/callback
       PUBLIC_URL: ${PUBLIC_URL}
+      HYAUTH_API_KEY: ${HYAUTH_API_KEY}
     ports:
       - "127.0.0.1:3001:3001"
 

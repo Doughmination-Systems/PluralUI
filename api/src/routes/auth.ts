@@ -85,6 +85,7 @@ router.get('/minecraft', (req: Request, res: Response) => {
     scope: 'XboxLive.signin offline_access',
     response_mode: 'query',
     state: token as string,
+    prompt: 'select_account',
   });
   res.redirect(`${MS_AUTH_URL}/authorize?${params}`);
 });
@@ -150,6 +151,100 @@ router.get('/minecraft/callback', async (req: Request, res: Response) => {
     console.error('MC auth error:', err?.response?.data ?? err.message);
     res.redirect(webUrl('/dashboard?error=mc_failed'));
   }
+});
+
+
+// ── Hytale (HyAuth) ───────────────────────────────────────────
+
+router.get('/hytale', async (req: Request, res: Response) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).send('Missing token');
+
+  // Verify JWT to get userId
+  let userId: string;
+  try {
+    const payload = jwt.verify(token as string, process.env.JWT_SECRET!) as any;
+    userId = payload.userId;
+  } catch {
+    return res.status(401).send('Invalid token');
+  }
+
+  // Create HyAuth session
+  try {
+    const r = await axios.post(
+      'https://www.hyauth.com/api/auth/create',
+      {
+        scopes: { gameProfiles: true },
+        redirectUrl: `${process.env.PUBLIC_URL}/auth/hytale/callback`,
+      },
+      { headers: { Authorization: `Bearer ${process.env.HYAUTH_API_KEY}`, 'Content-Type': 'application/json' } }
+    );
+    // Store userId in session via a short-lived JWT in the redirect state
+    const stateToken = jwt.sign({ userId, sessionId: r.data.sessionId }, process.env.JWT_SECRET!, { expiresIn: '10m' });
+    // Store state in DB temporarily
+    await pool.query(
+      `INSERT INTO hytale_auth_sessions (session_id, user_id, expires_at)
+       VALUES ($1, $2, now() + interval '10 minutes')
+       ON CONFLICT (session_id) DO UPDATE SET user_id = EXCLUDED.user_id, expires_at = EXCLUDED.expires_at`,
+      [r.data.sessionId, userId]
+    );
+    res.redirect(r.data.loginUrl);
+  } catch (err: any) {
+    console.error('HyAuth create error:', err?.response?.data ?? err.message);
+    res.redirect(webUrl('/dashboard?error=hytale_failed'));
+  }
+});
+
+router.get('/hytale/callback', async (req: Request, res: Response) => {
+  const session = req.query.session ?? req.query.sessionId;
+  console.log('[hytale callback] session:', session, 'query:', req.query);
+  if (!session) return res.redirect(webUrl('/dashboard?error=hytale_failed'));
+
+  // Look up userId from session
+  const stateRow = await pool.query(
+    'SELECT user_id FROM hytale_auth_sessions WHERE session_id = $1 AND expires_at > now()',
+    [session]
+  );
+  console.log('[hytale callback] stateRow:', stateRow.rows);
+  if (!stateRow.rows[0]) return res.redirect(webUrl('/dashboard?error=hytale_expired'));
+  const userId = stateRow.rows[0].user_id;
+
+  // Poll HyAuth for result (up to 10s)
+  let profile: any = null;
+  for (let i = 0; i < 10; i++) {
+    try {
+      const r = await axios.get(`https://www.hyauth.com/api/auth/${session}`, {
+        headers: { Authorization: `Bearer ${process.env.HYAUTH_API_KEY}` },
+      });
+      console.log(`[hytale callback] poll ${i}: status=${r.data.status}`);
+      if (r.data.status === 'completed') { profile = r.data; break; }
+      if (r.data.status === 'failed') break;
+    } catch (e: any) {
+      console.error(`[hytale callback] poll ${i} error:`, e?.response?.data ?? e.message);
+    }
+    await new Promise(res => setTimeout(res, 1000));
+  }
+
+  // Clean up session
+  await pool.query('DELETE FROM hytale_auth_sessions WHERE session_id = $1', [session]);
+
+  console.log('[hytale callback] profile:', profile);
+  if (!profile?.gameProfiles?.length) {
+    return res.redirect(webUrl('/dashboard?error=hytale_failed'));
+  }
+
+  for (const gp of profile.gameProfiles) {
+    await pool.query(
+      `INSERT INTO hytale_accounts (user_id, hytale_uuid, hytale_name)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (hytale_uuid) DO UPDATE SET
+         hytale_name = EXCLUDED.hytale_name,
+         user_id     = EXCLUDED.user_id`,
+      [userId, gp.uuid, gp.username]
+    );
+  }
+
+  res.redirect(webUrl('/dashboard?success=hytale_linked'));
 });
 
 function webUrl(path: string) {

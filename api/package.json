@@ -1,6 +1,6 @@
 {
   "name": "plural-cloud-api",
-  "version": "2.0.0",
+  "version": "3.14.15",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

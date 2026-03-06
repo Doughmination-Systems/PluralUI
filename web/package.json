@@ -1,6 +1,6 @@
 {
   "name": "plural-cloud-web",
-  "version": "2.0.0",
+  "version": "3.14.15",
   "type": "module",
   "scripts": {
     "dev": "vite",
