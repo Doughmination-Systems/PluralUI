@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:       #0a0a12;
+  --surface:  #11111c;
+  --lift:     #181826;
+  --border:   rgba(255,255,255,0.06);
+  --text:     #ddddf0;
+  --muted:    #6b6b8a;
+  --accent:   #b49cff;
+  --accent2:  #6ee7f7;
+  --ok:       #6debb8;
+  --warn:     #f5a86e;
+  --err:      #f47070;
+  --r:        14px;
+  --serif:    'Instrument Serif', Georgia, serif;
+  --sans:     'Instrument Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.65;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient glow top-left */
+body::after {
+  content: '';
+  position: fixed; top: -200px; left: -200px;
+  width: 700px; height: 700px;
+  background: radial-gradient(ellipse, rgba(100,60,200,0.10) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+h1,h2,h3 { font-family: var(--serif); font-weight: 400; line-height: 1.15; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: var(--sans); cursor: pointer; border: none;
+  border-radius: 8px; padding: 9px 18px; font-size: 14px; font-weight: 500;
+  transition: opacity .15s, transform .1s;
+}
+button:hover:not(:disabled) { opacity: .82; }
+button:active:not(:disabled) { transform: scale(.975); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+
+.btn-primary  { background: linear-gradient(135deg, #8b6dff, #5a3dd8); color: #fff; }
+.btn-discord  { background: #5865F2; color: #fff; }
+.btn-ms       { background: #107c10; color: #fff; }
+.btn-ghost    { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.btn-danger   { background: rgba(244,112,112,0.15); color: var(--err); border: 1px solid rgba(244,112,112,0.25); }
+.btn-sm       { padding: 6px 13px; font-size: 13px; border-radius: 6px; }
+
+input, textarea {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-family: var(--sans);
+  font-size: 14px; padding: 9px 12px; width: 100%;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+label { font-size: 12px; color: var(--muted); margin-bottom: 5px; display: block; letter-spacing: .03em; text-transform: uppercase; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px;
+}
+.card + .card { margin-top: 12px; }
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+.section-sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+/* Status badge */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; padding: 3px 10px;
+  border-radius: 20px; line-height: 1;
+}
+.badge-ok   { background: rgba(109,235,184,0.1); color: var(--ok);  border: 1px solid rgba(109,235,184,0.2); }
+.badge-warn { background: rgba(245,168,110,0.1); color: var(--warn); border: 1px solid rgba(245,168,110,0.2); }
+.badge-muted{ background: rgba(107,107,138,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+.loading-screen { display:flex; align-items:center; justify-content:center; height:100vh; }
+.spinner {
+  width:34px; height:34px; border:2.5px solid var(--border);
+  border-top-color: var(--accent); border-radius:50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Divider */
+hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* Mc account row */
+.mc-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 8px;
+  background: var(--lift); border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.mc-row img { width: 32px; height: 32px; border-radius: 4px; image-rendering: pixelated; }
+
+/* Notification strip */
+.notice {
+  padding: 10px 16px; border-radius: 8px; font-size: 13px;
+  margin-bottom: 14px;
+}
+.notice-ok   { background: rgba(109,235,184,0.07); border: 1px solid rgba(109,235,184,0.2); color: var(--ok); }
+.notice-err  { background: rgba(244,112,112,0.07); border: 1px solid rgba(244,112,112,0.2); color: var(--err); }

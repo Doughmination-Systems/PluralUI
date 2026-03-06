@@ -1,0 +1,45 @@
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
+import redis from './db/redis';
+
+import authRouter from './routes/auth';
+import userRouter from './routes/user';
+import pkRouter from './routes/pluralkit';
+import pluginRouter from './routes/plugin';
+
+const app = express();
+app.use(helmet());
+app.use(cors({ origin: process.env.PUBLIC_URL, credentials: true }));
+app.use(express.json());
+
+// Distributed rate limiter backed by Redis
+app.use(rateLimit({
+  windowMs: 60_000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args: string[]) => redis.call(...args) as any,
+  }),
+}));
+
+app.use('/auth', authRouter);
+app.use('/api', userRouter);
+app.use('/api/pluralkit', pkRouter);
+app.use('/plugin', pluginRouter);
+app.get('/health', async (_req, res) => {
+  const redisPing = await redis.ping().catch(() => 'error');
+  res.json({ ok: true, redis: redisPing === 'PONG' ? 'ok' : 'error' });
+});
+
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+const PORT = process.env.PORT ?? 3001;
+app.listen(PORT, () => console.log(`[Plural API] :${PORT}`));
