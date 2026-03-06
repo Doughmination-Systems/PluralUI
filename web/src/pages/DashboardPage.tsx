@@ -1,22 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth, MinecraftAccount } from '../hooks/useAuth';
 import api from '../api';
 
-const API = import.meta.env.VITE_API_URL ?? '';
+interface FrontMember {
+  id: string;
+  name: string;
+  display_name: string | null;
+  color: string | null;
+  avatar_url: string | null;
+  pronouns: string | null;
+}
+
+interface FrontData {
+  members: FrontMember[];
+  started_at: string | null;
+}
 
 export default function DashboardPage() {
   const { user, refresh, logout } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const [front, setFront] = useState<FrontData | null>(null);
 
   const notice = params.get('success');
   const errParam = params.get('error');
+  const clearParams = () => navigate('/dashboard', { replace: true });
+
+  const loadFront = async () => {
+    try {
+      const r = await api.get('/api/me/front');
+      setFront(r.data);
+    } catch {}
+  };
+
+  useEffect(() => { loadFront(); }, []);
 
   if (!user) return null;
-
-  // Clear query params after showing notice
-  const clearParams = () => navigate('/dashboard', { replace: true });
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 20px 80px' }}>
@@ -48,6 +68,49 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Currently Fronting */}
+      {front && front.members.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <div className="section-title" style={{ marginBottom: 4 }}>Currently Fronting</div>
+          <div className="section-sub">
+            Since {front.started_at ? new Date(front.started_at).toLocaleString() : 'unknown'}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            {front.members.map(m => {
+              const color = m.color ? `#${m.color}` : 'var(--accent)';
+              const displayName = m.display_name ?? m.name;
+              return (
+                <div key={m.id} className="card" style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                  borderColor: color, boxShadow: `0 0 0 1px ${color}30`,
+                  flex: '1 1 200px',
+                }}>
+                  {m.avatar_url ? (
+                    <img src={m.avatar_url} alt="" style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      border: `2px solid ${color}`, objectFit: 'cover',
+                    }} />
+                  ) : (
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                      background: `${color}22`, border: `2px solid ${color}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, color,
+                    }}>
+                      {displayName[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 500, color }}>{displayName}</div>
+                    {m.pronouns && <div style={{ fontSize: 12, color: 'var(--muted)' }}>{m.pronouns}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Minecraft Accounts */}
       <MinecraftSection user={user} onRefresh={refresh} />
 
@@ -56,7 +119,7 @@ export default function DashboardPage() {
       {/* PluralKit */}
       <PluralKitSection user={user} onRefresh={refresh} />
 
-      {/* Future: Hytale, Simply Plural, etc. */}
+      {/* Future */}
       <div style={{ marginTop: 24, opacity: 0.4 }}>
         <div className="card" style={{ borderStyle: 'dashed', textAlign: 'center', padding: 28 }}>
           <div style={{ fontFamily: 'var(--serif)', fontSize: 18, marginBottom: 6 }}>More coming soon</div>
@@ -71,8 +134,14 @@ export default function DashboardPage() {
 
 function MinecraftSection({ user, onRefresh }: { user: any; onRefresh: () => void }) {
   const [unlinking, setUnlinking] = useState<string | null>(null);
-  const token = localStorage.getItem('plural_token');
-  const linkUrl = `${API}/auth/minecraft?token=${encodeURIComponent(token ?? '')}`;
+  const [refreshing, setRefreshing] = useState(false);
+  // Bust Crafatar cache by appending a timestamp, updated on manual refresh
+  const [avatarBust, setAvatarBust] = useState(() => Math.floor(Date.now() / 60000));
+
+  const handleLink = () => {
+    const t = localStorage.getItem('plural_token');
+    window.location.href = `/auth/minecraft?token=${encodeURIComponent(t ?? '')}&ts=${Date.now()}`;
+  };
 
   const unlink = async (uuid: string) => {
     if (!confirm('Remove this Minecraft account?')) return;
@@ -82,18 +151,31 @@ function MinecraftSection({ user, onRefresh }: { user: any; onRefresh: () => voi
     setUnlinking(null);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await onRefresh();
+    setAvatarBust(Date.now()); // force Crafatar re-fetch
+    setRefreshing(false);
+  };
+
   return (
     <div>
-      <div className="section-title">Minecraft</div>
-      <div className="section-sub">
-        Link one or more accounts. All share your system data.
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+        <div className="section-title">Minecraft</div>
+        {user.minecraft_accounts.length > 0 && (
+          <button className="btn-ghost btn-sm" onClick={handleRefresh} disabled={refreshing}
+            title="Refresh usernames and skins">
+            {refreshing ? '…' : '↻ Refresh'}
+          </button>
+        )}
       </div>
+      <div className="section-sub">Link one or more accounts. All share your system data.</div>
 
       {user.minecraft_accounts.length > 0 ? (
         user.minecraft_accounts.map((mc: MinecraftAccount) => (
           <div className="mc-row" key={mc.minecraft_uuid}>
             <img
-              src={`https://crafatar.com/avatars/${mc.minecraft_uuid}?size=32&overlay`}
+              src={`https://crafatar.com/avatars/${mc.minecraft_uuid}?size=32&overlay&t=${avatarBust}`}
               alt={mc.minecraft_name}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
@@ -102,24 +184,19 @@ function MinecraftSection({ user, onRefresh }: { user: any; onRefresh: () => voi
               <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{mc.minecraft_uuid}</div>
             </div>
             <span className="badge badge-ok">linked</span>
-            <button
-              className="btn-danger btn-sm"
-              onClick={() => unlink(mc.minecraft_uuid)}
-              disabled={unlinking === mc.minecraft_uuid}
-            >
+            <button className="btn-danger btn-sm" onClick={() => unlink(mc.minecraft_uuid)}
+              disabled={unlinking === mc.minecraft_uuid}>
               {unlinking === mc.minecraft_uuid ? '…' : 'Remove'}
             </button>
           </div>
         ))
       ) : (
-        <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>
-          No accounts linked yet.
-        </div>
+        <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 12 }}>No accounts linked yet.</div>
       )}
 
-      <a href={linkUrl} style={{ textDecoration: 'none', display: 'inline-block', marginTop: 4 }}>
-        <button className="btn-ms btn-sm">+ Link Minecraft account</button>
-      </a>
+      <button className="btn-ms btn-sm" onClick={handleLink} style={{ marginTop: 4 }}>
+        + Link Minecraft account
+      </button>
     </div>
   );
 }
@@ -181,8 +258,9 @@ function PluralKitSection({ user, onRefresh }: { user: any; onRefresh: () => voi
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
         <div className="section-title">PluralKit</div>
-        {user.pk_linked && <span className="badge badge-ok">linked</span>}
-        {!user.pk_linked && <span className="badge badge-muted">not linked</span>}
+        {user.pk_linked
+          ? <span className="badge badge-ok">linked</span>
+          : <span className="badge badge-muted">not linked</span>}
       </div>
       <div className="section-sub">
         {user.pk_imported
@@ -192,20 +270,14 @@ function PluralKitSection({ user, onRefresh }: { user: any; onRefresh: () => voi
             : 'Paste your PluralKit token to connect. Get it via pk;token in Discord.'}
       </div>
 
-      {msg && (
-        <div className={`notice ${msg.ok ? 'notice-ok' : 'notice-err'}`}>{msg.text}</div>
-      )}
+      {msg && <div className={`notice ${msg.ok ? 'notice-ok' : 'notice-err'}`}>{msg.text}</div>}
 
       {!user.pk_linked ? (
         <div className="card" style={{ display: 'flex', gap: 10 }}>
-          <input
-            type="password"
-            value={token}
-            onChange={e => setToken(e.target.value)}
-            placeholder="Your PluralKit token"
-            onKeyDown={e => e.key === 'Enter' && link()}
-          />
-          <button className="btn-primary" onClick={link} disabled={loading || !token.trim()} style={{ whiteSpace: 'nowrap' }}>
+          <input type="password" value={token} onChange={e => setToken(e.target.value)}
+            placeholder="Your PluralKit token" onKeyDown={e => e.key === 'Enter' && link()} />
+          <button className="btn-primary" onClick={link} disabled={loading || !token.trim()}
+            style={{ whiteSpace: 'nowrap' }}>
             {loading ? '…' : 'Link'}
           </button>
         </div>
@@ -216,29 +288,19 @@ function PluralKitSection({ user, onRefresh }: { user: any; onRefresh: () => voi
               System ID: <code style={{ color: 'var(--accent)' }}>{user.pk_system_id}</code>
             </div>
           )}
-
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {/* Import locked after first use */}
-            <button
-              className="btn-primary btn-sm"
-              onClick={doImport}
+            <button className="btn-primary btn-sm" onClick={doImport}
               disabled={loading || user.pk_imported}
-              title={user.pk_imported ? 'Already imported — use Sync to update' : undefined}
-            >
+              title={user.pk_imported ? 'Already imported — use Sync to update' : undefined}>
               {user.pk_imported ? 'Imported ✓' : 'Import members'}
             </button>
-
             {user.pk_imported && (
               <button className="btn-ghost btn-sm" onClick={doSync} disabled={loading}>
                 {loading ? 'Syncing…' : '↻ Sync'}
               </button>
             )}
-
-            <button className="btn-danger btn-sm" onClick={unlink} disabled={loading}>
-              Unlink
-            </button>
+            <button className="btn-danger btn-sm" onClick={unlink} disabled={loading}>Unlink</button>
           </div>
-
           {user.pk_imported && (
             <p style={{ marginTop: 12, fontSize: 12, color: 'var(--muted)' }}>
               Sync pulls updated member data from PluralKit and pushes your current in-game front back to PK.

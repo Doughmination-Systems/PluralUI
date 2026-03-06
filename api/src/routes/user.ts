@@ -47,3 +47,27 @@ router.delete('/me/minecraft/:uuid', requireAuth, async (req: AuthRequest, res: 
 });
 
 export default router;
+
+// Current front for the dashboard
+router.get('/me/front', requireAuth, async (req: AuthRequest, res: Response) => {
+  const result = await pool.query(
+    `SELECT
+       af.started_at,
+       COALESCE(json_agg(
+         json_build_object(
+           'id', m.id,
+           'name', m.name,
+           'display_name', m.display_name,
+           'color', m.color,
+           'avatar_url', m.avatar_url,
+           'pronouns', m.pronouns
+         ) ORDER BY m.name
+       ) FILTER (WHERE m.id IS NOT NULL), '[]') AS members
+     FROM active_fronts af
+     JOIN members m ON m.id = ANY(af.member_ids)
+     WHERE af.user_id = $1
+     GROUP BY af.started_at`,
+    [req.userId]
+  );
+  res.json(result.rows[0] ?? { members: [], started_at: null });
+});

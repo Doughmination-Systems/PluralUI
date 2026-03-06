@@ -12,7 +12,9 @@ import pkRouter from './routes/pluralkit';
 import pluginRouter from './routes/plugin';
 
 const app = express();
-app.use(helmet());
+app.use(helmet({
+  hsts: false
+}));
 app.use(cors({ origin: process.env.PUBLIC_URL, credentials: true }));
 app.use(express.json());
 
@@ -23,7 +25,7 @@ app.use(rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args) as any,
+    sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as any,
   }),
 }));
 
