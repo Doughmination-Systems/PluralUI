@@ -39,15 +39,8 @@ services:
       DATABASE_URL: postgresql://plural:${POSTGRES_PASSWORD}@db:5432/plural
       REDIS_URL: redis://redis:6379
       PORT: 3001
-      JWT_SECRET: ${JWT_SECRET}
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
-      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
-      DISCORD_REDIRECT_URI: ${PUBLIC_URL}/auth/discord/callback
-      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
-      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
-      MICROSOFT_REDIRECT_URI: ${PUBLIC_URL}/auth/minecraft/callback
-      PUBLIC_URL: ${PUBLIC_URL}
-      HYAUTH_API_KEY: ${HYAUTH_API_KEY}
+    env_file:
+      - .env
     ports:
       - "127.0.0.1:3001:3001"
 

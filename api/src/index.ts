@@ -1,10 +1,13 @@
 import 'dotenv/config';
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import redis from './db/redis';
+import { attachWebSocketServer } from './ws/wsServer';
+import { startPKPoller } from './ws/pkPoller';
 
 import authRouter from './routes/auth';
 import userRouter from './routes/user';
@@ -18,7 +21,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...require('helmet').contentSecurityPolicy.getDefaultDirectives(),
-      'img-src': ["'self'", 'data:', 'https://crafatar.com', 'https://mc-heads.net', 'https://cdn.discordapp.com'],
+      'img-src': ["'self'", 'data:', 'https://mc-heads.net', 'https://cdn.discordapp.com'],
     },
   },
 }));
@@ -53,4 +56,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 const PORT = process.env.PORT ?? 3001;
-app.listen(PORT, () => console.log(`[Plural API] :${PORT}`));
+const server = createServer(app);
+attachWebSocketServer(server);
+startPKPoller();
+server.listen(PORT, () => console.log(`[Plural API] :${PORT}`));

@@ -4,6 +4,8 @@ import { z } from 'zod';
 import pool from '../db/pool';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { invalidate, keys } from '../db/redis';
+import { pullFrontFromPK } from './pkFrontSync';
+import { broadcastFrontChange, broadcastMembersChanged } from '../ws/wsServer';
 
 const router = Router();
 const PK = 'https://api.pluralkit.me/v2';
@@ -61,9 +63,28 @@ router.post('/import', requireAuth, async (req: AuthRequest, res: Response) => {
     [req.userId]
   );
 
+  // Pull current PK front into local session now that members exist
+  await pullFrontFromPK(req.userId!, token);
+
   // Invalidate user cache + all linked MC account player caches
   await invalidateUserAndPlayers(req.userId!);
+  broadcastMembersChanged(req.userId!);
+  broadcastFrontChange(req.userId!);
   res.json({ ok: true, imported, skipped });
+});
+
+// Pull current PK front into local session (can call anytime, not just on import)
+router.post('/pull-front', requireAuth, async (req: AuthRequest, res: Response) => {
+  const row = await pool.query(
+    'SELECT pluralkit_token FROM users WHERE id = $1',
+    [req.userId]
+  );
+  const { pluralkit_token: token } = row.rows[0] ?? {};
+  if (!token) return res.status(400).json({ error: 'No PluralKit token linked' });
+
+  await pullFrontFromPK(req.userId!, token);
+  await invalidateUserAndPlayers(req.userId!);
+  res.json({ ok: true });
 });
 
 // Bidirectional sync
@@ -100,6 +121,8 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res: Response) => {
 
   // Invalidate caches — member data may have changed
   await invalidateUserAndPlayers(req.userId!);
+  broadcastMembersChanged(req.userId!);
+  broadcastFrontChange(req.userId!);
   res.json({ ok: true, members_updated: imported, members_skipped: skipped, front_pushed: pushedFront });
 });
 

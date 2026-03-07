@@ -18,9 +18,13 @@ export interface HytaleAccount {
 
 export interface User {
   id: string;
-  discord_id: string;
-  discord_tag: string;
+  discord_id: string | null;
+  discord_tag: string | null;
   discord_avatar: string | null;
+  github_id: string | null;
+  github_login: string | null;
+  github_avatar: string | null;
+  system_name: string | null;
   pk_linked: boolean;
   pk_imported: boolean;
   pk_system_id: string | null;

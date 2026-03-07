@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import pool from '../db/pool';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { pushFrontToPK } from './pkFrontSync';
+import { broadcastFrontChange } from '../ws/wsServer';
 
 const router = Router();
 
@@ -11,11 +13,12 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
     const result = await pool.query(
       `SELECT
          u.id, u.discord_id, u.discord_tag, u.discord_avatar,
+         u.github_id, u.github_login, u.github_avatar,
          u.pk_system_id,  (u.pluralkit_token IS NOT NULL)  AS pk_linked,  (u.pk_imported_at  IS NOT NULL) AS pk_imported,
          u.sp_system_id,  (u.sp_token IS NOT NULL)         AS sp_linked,  (u.sp_imported_at  IS NOT NULL) AS sp_imported,
          u.plural_user_id,(u.plural_token IS NOT NULL)     AS plural_linked, u.plural_app,   (u.plural_imported_at IS NOT NULL) AS plural_imported,
          COALESCE((
-           SELECT json_agg(jsonb_build_object('id', m.id, 'minecraft_uuid', m.minecraft_uuid, 'minecraft_name', m.minecraft_name, 'linked_at', m.linked_at) ORDER BY m.minecraft_name)
+           SELECT json_agg(jsonb_build_object('id', m.id, 'minecraft_uuid', m.minecraft_uuid, 'minecraft_name', m.minecraft_name, 'linked_at', m.linked_at, 'enabled', m.enabled) ORDER BY m.minecraft_name)
            FROM minecraft_accounts m WHERE m.user_id = u.id
          ), '[]') AS minecraft_accounts,
          COALESCE((
@@ -146,3 +149,95 @@ router.delete('/me/hytale/:uuid', requireAuth, async (req: AuthRequest, res: Res
 });
 
 export default router;
+// ── Add member to front ───────────────────────────────────────
+
+router.post('/me/front/add', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { member_id } = req.body;
+  if (!member_id) return res.status(400).json({ error: 'member_id required' });
+  try {
+    // Verify member belongs to this user
+    const member = await pool.query(
+      'SELECT id FROM members WHERE id = $1 AND user_id = $2',
+      [member_id, req.userId]
+    );
+    if (!member.rows[0]) return res.status(404).json({ error: 'Member not found' });
+
+    // Get or create active front session
+    const existing = await pool.query(
+      `SELECT id, member_ids FROM fronting_sessions WHERE user_id = $1 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+      [req.userId]
+    );
+
+    if (existing.rows[0]) {
+      const ids: string[] = existing.rows[0].member_ids;
+      if (ids.includes(member_id)) return res.json({ ok: true }); // already fronting
+      await pool.query(
+        'UPDATE fronting_sessions SET member_ids = array_append(member_ids, $1) WHERE id = $2',
+        [member_id, existing.rows[0].id]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO fronting_sessions (user_id, member_ids) VALUES ($1, $2)',
+        [req.userId, [member_id]]
+      );
+    }
+    // Fire-and-forget push to PK if user has PK linked as active app
+    pushFrontToPK(req.userId!);
+    broadcastFrontChange(req.userId!);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('POST /me/front/add error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── Remove member from front ──────────────────────────────────
+
+router.post('/me/front/remove', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { member_id } = req.body;
+  if (!member_id) return res.status(400).json({ error: 'member_id required' });
+  try {
+    const existing = await pool.query(
+      `SELECT id, member_ids FROM fronting_sessions WHERE user_id = $1 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+      [req.userId]
+    );
+    if (!existing.rows[0]) return res.json({ ok: true });
+
+    const ids: string[] = existing.rows[0].member_ids.filter((id: string) => id !== member_id);
+
+    if (ids.length === 0) {
+      await pool.query(
+        'UPDATE fronting_sessions SET ended_at = now() WHERE id = $1',
+        [existing.rows[0].id]
+      );
+      pushFrontToPK(req.userId!, []);
+    } else {
+      await pool.query(
+        'UPDATE fronting_sessions SET member_ids = $1 WHERE id = $2',
+        [ids, existing.rows[0].id]
+      );
+      pushFrontToPK(req.userId!, ids);
+    }
+    broadcastFrontChange(req.userId!);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('POST /me/front/remove error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── List all members ──────────────────────────────────────────
+
+router.get('/me/members', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, display_name, pronouns, color, avatar_url
+       FROM members WHERE user_id = $1 ORDER BY name ASC`,
+      [req.userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('GET /me/members error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});

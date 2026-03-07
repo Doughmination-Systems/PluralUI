@@ -1,12 +1,24 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ── Users ─────────────────────────────────────────────────────
--- Core identity, keyed by Discord ID
+-- Core identity — at least one of discord_id or github_id must be set
 CREATE TABLE IF NOT EXISTS users (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  discord_id          VARCHAR(30) UNIQUE NOT NULL,
-  discord_tag         VARCHAR(100) NOT NULL,
+
+  -- Discord (optional if GitHub is linked)
+  discord_id          VARCHAR(30) UNIQUE,
+  discord_tag         VARCHAR(100),
   discord_avatar      TEXT,
+
+  -- GitHub (optional if Discord is linked)
+  github_id           VARCHAR(30) UNIQUE,
+  github_login        VARCHAR(100),
+  github_avatar       TEXT,
+
+  -- System identity
+  system_name         VARCHAR(100),
+
+  CONSTRAINT users_requires_identity CHECK (discord_id IS NOT NULL OR github_id IS NOT NULL),
 
   -- PluralKit
   pluralkit_token     TEXT,
@@ -95,9 +107,10 @@ CREATE OR REPLACE VIEW active_fronts AS
   ORDER BY user_id, started_at DESC;
 
 -- ── Indexes ───────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_mc_accounts_uuid     ON minecraft_accounts(minecraft_uuid);
-CREATE INDEX IF NOT EXISTS idx_mc_accounts_user     ON minecraft_accounts(user_id);
-CREATE INDEX IF NOT EXISTS idx_hytale_accounts_uuid ON hytale_accounts(hytale_uuid);
-CREATE INDEX IF NOT EXISTS idx_hytale_accounts_user ON hytale_accounts(user_id);
-CREATE INDEX IF NOT EXISTS idx_members_user         ON members(user_id);
-CREATE INDEX IF NOT EXISTS idx_front_open           ON fronting_sessions(user_id) WHERE ended_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_users_github_id       ON users(github_id);
+CREATE INDEX IF NOT EXISTS idx_mc_accounts_uuid      ON minecraft_accounts(minecraft_uuid);
+CREATE INDEX IF NOT EXISTS idx_mc_accounts_user      ON minecraft_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_hytale_accounts_uuid  ON hytale_accounts(hytale_uuid);
+CREATE INDEX IF NOT EXISTS idx_hytale_accounts_user  ON hytale_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_members_user          ON members(user_id);
+CREATE INDEX IF NOT EXISTS idx_front_open            ON fronting_sessions(user_id) WHERE ended_at IS NULL;

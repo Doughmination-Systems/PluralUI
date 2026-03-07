@@ -53,7 +53,7 @@ button:active:not(:disabled) { transform: scale(.975); }
 button:disabled { opacity: .35; cursor: not-allowed; }
 
 .btn-primary  { background: linear-gradient(135deg, #8b6dff, #5a3dd8); color: #fff; }
-.btn-discord  { background: #5865F2; color: #fff; }
+.btn-discord  { background: var(--accent); color: #fff; }
 .btn-ms       { background: #107c10; color: #fff; }
 .btn-ghost    { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
@@ -125,3 +125,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 }
 .notice-ok   { background: rgba(109,235,184,0.07); border: 1px solid rgba(109,235,184,0.2); color: var(--ok); }
 .notice-err  { background: rgba(244,112,112,0.07); border: 1px solid rgba(244,112,112,0.2); color: var(--err); }
+
+/* Square card grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
