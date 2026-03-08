@@ -90,7 +90,7 @@ async function clearFront(userId: string, cacheKey: string, res: Response) {
 
 // ── Minecraft routes ──────────────────────────────────────────
 
-router.get('/player/minecraft/:uuid', async (req: Request, res: Response) => {
+router.get('/player/minecraft/:uuid', async (req: Request<{ uuid: string }>, res: Response) => {
   const { uuid } = req.params;
   const cacheKey = keys.player(uuid);
 
@@ -104,7 +104,7 @@ router.get('/player/minecraft/:uuid', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-router.post('/player/minecraft/:uuid/front', async (req: Request, res: Response) => {
+router.post('/player/minecraft/:uuid/front', async (req: Request<{ uuid: string }>, res: Response) => {
   const parsed = z.object({ member_names: z.array(z.string()).min(1) }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Invalid body' });
 
@@ -114,7 +114,7 @@ router.post('/player/minecraft/:uuid/front', async (req: Request, res: Response)
   await switchFront(userId, parsed.data.member_names, keys.player(req.params.uuid), res);
 });
 
-router.delete('/player/minecraft/:uuid/front', async (req: Request, res: Response) => {
+router.delete('/player/minecraft/:uuid/front', async (req: Request<{ uuid: string }>, res: Response) => {
   const userId = await getUserIdByAccount('minecraft_accounts', 'minecraft_uuid', req.params.uuid);
   if (!userId) return res.status(404).json({ error: 'Player not registered' });
 
@@ -123,7 +123,7 @@ router.delete('/player/minecraft/:uuid/front', async (req: Request, res: Respons
 
 // ── Hytale routes ─────────────────────────────────────────────
 
-router.get('/player/hytale/:uuid', async (req: Request, res: Response) => {
+router.get('/player/hytale/:uuid', async (req: Request<{ uuid: string }>, res: Response) => {
   const { uuid } = req.params;
   const cacheKey = keys.player(uuid);
 
@@ -137,7 +137,7 @@ router.get('/player/hytale/:uuid', async (req: Request, res: Response) => {
   res.json(result.rows[0]);
 });
 
-router.post('/player/hytale/:uuid/front', async (req: Request, res: Response) => {
+router.post('/player/hytale/:uuid/front', async (req: Request<{ uuid: string }>, res: Response) => {
   const parsed = z.object({ member_names: z.array(z.string()).min(1) }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Invalid body' });
 
@@ -147,7 +147,7 @@ router.post('/player/hytale/:uuid/front', async (req: Request, res: Response) =>
   await switchFront(userId, parsed.data.member_names, keys.player(req.params.uuid), res);
 });
 
-router.delete('/player/hytale/:uuid/front', async (req: Request, res: Response) => {
+router.delete('/player/hytale/:uuid/front', async (req: Request<{ uuid: string }>, res: Response) => {
   const userId = await getUserIdByAccount('hytale_accounts', 'hytale_uuid', req.params.uuid);
   if (!userId) return res.status(404).json({ error: 'Player not registered' });
 
