@@ -92,11 +92,9 @@ export default function GeneralSettingsPage() {
 
   const pluralApp = user.plural_app;
   const pluralLinked = pluralApp === 'pluralkit' ? user.pk_linked
-    : pluralApp === 'simplyplural' ? user.sp_linked
     : pluralApp === 'plural' ? user.plural_linked
     : false;
   const pluralSystemId = pluralApp === 'pluralkit' ? user.pk_system_id
-    : pluralApp === 'simplyplural' ? user.sp_system_id
     : pluralApp === 'plural' ? user.plural_user_id
     : null;
 

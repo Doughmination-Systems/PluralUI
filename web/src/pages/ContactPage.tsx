@@ -55,6 +55,7 @@ export default function ContactPage() {
         <div style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Response Times</div>
         <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, margin: 0 }}>
           This is a personal project maintained in spare time. We aim to respond within a few days, but cannot guarantee specific response times.
+          If you are contacting me regarding adding more functionality, please read <a href="/unsupported">this</a> page!
         </p>
       </div>
 

@@ -13,7 +13,6 @@ import authRouter from './routes/auth';
 import userRouter from './routes/user';
 import pkRouter from './routes/pluralkit';
 import pluginRouter from './routes/plugin';
-import spRouter from './routes/simplyplural';
 import pluralRouter from './routes/plural';
 
 const app = express();
@@ -42,7 +41,6 @@ app.use(rateLimit({
 app.use('/auth', authRouter);
 app.use('/api', userRouter);
 app.use('/api/pluralkit', pkRouter);
-app.use('/api/simplyplural', spRouter);
 app.use('/api/plural', pluralRouter);
 app.use('/plugin', pluginRouter);
 app.get('/health', async (_req, res) => {

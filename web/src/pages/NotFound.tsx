@@ -35,7 +35,7 @@ export default function NotFound() {
           alt="lostSkin"
           style={{
             width: 120,
-            height: 120,
+            height: 288,
             animation: 'float 2s ease-in-out infinite',
             borderRadius: 12
           }}

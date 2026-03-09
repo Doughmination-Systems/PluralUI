@@ -15,6 +15,7 @@ import PrivacyPage from './pages/legal/PrivacyPage';
 import TermsPage from './pages/legal/TermsPage';
 import LicencePage from './pages/legal/LicencePage';
 import NotFound from './pages/NotFound';
+import Unsupported from './pages/Unsupported';
 
 import './index.css';
 
@@ -61,6 +62,9 @@ export default function App() {
           <Route path="/legal/terms" element={<TermsPage />} />
           <Route path="/legal/licence" element={<LicencePage />} />
 
+          {/* Unsupported stuff page */}
+          <Route path="/unsupported" element={<Unsupported />} />
+          
           {/* Catch-all 404 */}
           <Route path="*" element={<NotFound />} />
 

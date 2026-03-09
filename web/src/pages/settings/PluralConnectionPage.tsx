@@ -16,17 +16,6 @@ const PLURAL_APPS = [
     recommended: true,
   },
   {
-    id: 'simplyplural',
-    label: 'Simply Plural',
-    desc: 'Settings → Account → Tokens in the app',
-    placeholder: 'Your Simply Plural token',
-    linkRoute: '/api/simplyplural/link',
-    importRoute: '/api/simplyplural/import',
-    syncRoute: '/api/simplyplural/sync',
-    systemLabel: 'System ID',
-    bidirectional: false,
-  },
-  {
     id: 'plural',
     label: '/plu/ral',
     desc: '/api command in the bot',
@@ -68,17 +57,14 @@ export default function PluralConnectionPage() {
   const activeApp = PLURAL_APPS.find(a => a.id === user.plural_app);
 
   const linked = user.plural_app === 'pluralkit' ? user.pk_linked
-    : user.plural_app === 'simplyplural' ? user.sp_linked
     : user.plural_app === 'plural' ? user.plural_linked
     : false;
 
   const imported = user.plural_app === 'pluralkit' ? user.pk_imported
-    : user.plural_app === 'simplyplural' ? user.sp_imported
     : user.plural_app === 'plural' ? user.plural_imported
     : false;
 
   const systemId = user.plural_app === 'pluralkit' ? user.pk_system_id
-    : user.plural_app === 'simplyplural' ? user.sp_system_id
     : user.plural_user_id;
 
   return (
@@ -86,6 +72,7 @@ export default function PluralConnectionPage() {
       <div>
         <div className="section-title">Plural Connection</div>
         <div className="section-sub">Choose your plural app and link your account to import members.</div>
+        <div className="section-sub">Note: We do not, and will never support Octocon. More can be found <a href="/unsupported">here</a>.</div>
       </div>
 
       {msg && <div className={`notice ${msg.ok ? 'notice-ok' : 'notice-err'}`}>{msg.text}</div>}

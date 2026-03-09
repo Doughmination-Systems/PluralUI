@@ -28,9 +28,6 @@ export interface User {
   pk_linked: boolean;
   pk_imported: boolean;
   pk_system_id: string | null;
-  sp_linked: boolean;
-  sp_imported: boolean;
-  sp_system_id: string | null;
   plural_linked: boolean;
   plural_app: string | null;
   plural_imported: boolean;

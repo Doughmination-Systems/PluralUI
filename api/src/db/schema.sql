@@ -25,11 +25,6 @@ CREATE TABLE IF NOT EXISTS users (
   pk_system_id        VARCHAR(10),
   pk_imported_at      TIMESTAMPTZ,
 
-  -- Simply Plural
-  sp_token            TEXT,
-  sp_system_id        TEXT,
-  sp_imported_at      TIMESTAMPTZ,
-
   -- /plu/ral
   plural_token        TEXT,
   plural_user_id      TEXT,
@@ -69,7 +64,6 @@ CREATE TABLE IF NOT EXISTS members (
   user_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   source            VARCHAR(20) DEFAULT 'pluralkit',
   pk_member_id      VARCHAR(10),
-  sp_member_id      TEXT,
   plural_member_id  TEXT,
   name              TEXT NOT NULL,
   display_name      TEXT,

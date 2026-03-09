@@ -15,7 +15,6 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
          u.id, u.discord_id, u.discord_tag, u.discord_avatar,
          u.github_id, u.github_login, u.github_avatar,
          u.pk_system_id,  (u.pluralkit_token IS NOT NULL)  AS pk_linked,  (u.pk_imported_at  IS NOT NULL) AS pk_imported,
-         u.sp_system_id,  (u.sp_token IS NOT NULL)         AS sp_linked,  (u.sp_imported_at  IS NOT NULL) AS sp_imported,
          u.plural_user_id,(u.plural_token IS NOT NULL)     AS plural_linked, u.plural_app,   (u.plural_imported_at IS NOT NULL) AS plural_imported,
          COALESCE((
            SELECT json_agg(jsonb_build_object('id', m.id, 'minecraft_uuid', m.minecraft_uuid, 'minecraft_name', m.minecraft_name, 'linked_at', m.linked_at, 'enabled', m.enabled) ORDER BY m.minecraft_name)
@@ -64,7 +63,7 @@ router.get('/me/front', requireAuth, async (req: AuthRequest, res: Response) => 
 
 router.post('/me/plural-app', requireAuth, async (req: AuthRequest, res: Response) => {
   const { app } = req.body;
-  if (!['pluralkit', 'simplyplural', 'plural'].includes(app)) {
+  if (!['pluralkit', 'plural'].includes(app)) {
     return res.status(400).json({ error: 'Invalid app' });
   }
   try {
