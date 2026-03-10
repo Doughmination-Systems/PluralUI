@@ -43,6 +43,9 @@ services:
       - .env
     ports:
       - "127.0.0.1:3001:3001"
+    volumes:
+      - "./.env:/app/.env:ro"
+      - "./.env.keys:/app/.env.keys:ro"
 
   web:
     build:
