@@ -1,8 +1,8 @@
 # The Estrogen Source-Available Licence
 
-**Version 1.3**
+**Version 1.4**
 
-This Licence may be referred to as the **Estrogen Source-Available Licence (ESAL)**. This specific version may be referred to as **ESAL‑1.3**.
+This Licence may be referred to as the **Estrogen Source-Available Licence (ESAL)**. This specific version may be referred to as **ESAL‑1.4**.
 
 Copyright © 2026 Clove Nytrix Doughmination Twilight.
 
@@ -55,7 +55,7 @@ Any individual or organisation wishing to use the Software for a commercial purp
 
 Requests for commercial licensing must be made via email to:
 
-**[admin@doughmination.win](mailto:admin@doughmination.win)**
+**[admin@clovelib.win](mailto:admin@clovelib.win)**
 
 Commercial licence terms may include fees, revenue-sharing arrangements, usage limitations, or other conditions, and are granted solely at the discretion of Clove Nytrix Doughmination Twilight.
 
@@ -153,3 +153,17 @@ Upon revocation, all commercial use of the Software must cease immediately unles
 ## 12. Governing Law (Trademark Matters)
 
 All matters relating to trademarks, Trademarked Components, and trademark enforcement under this Licence shall be governed by and construed in accordance with the laws of **England and Wales**, without regard to conflict-of-law principles.
+
+---
+
+## 13. Derivative Licences
+
+Creation of a licence derived from, based upon, or substantially similar to this Licence (the **Estrogen Source-Available Licence**) is permitted **only with prior written permission** from Clove Nytrix Doughmination Twilight.
+
+Where such permission has been granted, any derivative licence must include clear attribution stating that it is **derived from or based on the Estrogen Source-Available Licence (ESAL)** and must credit **Clove Nytrix Doughmination Twilight** as the original author of the base licence.
+
+Attribution must appear in a reasonably visible location within the derivative licence text, such as within the header, preamble, or licence notice.
+
+Permission to create a derivative licence may include additional terms, conditions, or limitations as specified in the written authorisation.
+
+Nothing in this section grants permission to create derivative licences without such written authorisation.
