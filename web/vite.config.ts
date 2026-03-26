@@ -7,5 +7,9 @@ export default defineConfig({
     // Dev server: serve index.html for all 404s (SPA fallback)
     fs: { strict: false },
   },
-  appType: 'spa', // Tells Vite to serve index.html for unmatched routes in both dev + preview
+  preview: {
+    // Allow your custom host for `vite preview`
+    allowedHosts: ['plural.doughmination.win'],
+  },
+  appType: 'spa', // SPA fallback for unmatched routes
 });
